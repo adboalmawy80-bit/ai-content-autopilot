@@ -20,22 +20,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentCompiledPayload = null;
 
-    // 💡 0. فحص الجلسة أوتوماتيكياً عند فتح/تحديث الصفحة
+    // دالة مساعدة لتبديل الواجهات بآمان تام
+    function showWorkspace(username) {
+        if (loginView) loginView.style.display = 'none';
+        if (workspaceView) workspaceView.style.display = 'block';
+        if (logoutBtn) logoutBtn.style.display = 'inline-block';
+        if (sessionStatus) {
+            sessionStatus.innerText = `USER: ${username.toUpperCase()}`;
+            sessionStatus.style.color = '#10b981';
+        }
+    }
+
+    function showLogin() {
+        if (workspaceView) workspaceView.style.display = 'none';
+        if (loginView) loginView.style.display = 'block';
+        if (logoutBtn) logoutBtn.style.display = 'none';
+        if (sessionStatus) {
+            sessionStatus.innerText = 'AUTH REQUIRED';
+            sessionStatus.style.color = '#64748b';
+        }
+        if (loginBtn) loginBtn.innerText = 'Authenticate Session ➔';
+        const passInput = document.getElementById('password');
+        if (passInput) passInput.value = '';
+    }
+
+    // 💡 0. فحص الجلسة عند فتح/تحديث الصفحة
     const savedAuth = localStorage.getItem('isLoggedIn');
     const savedUser = localStorage.getItem('username');
 
     if (savedAuth === 'true' && savedUser) {
-        loginView.classList.add('hidden');
-        workspaceView.classList.remove('hidden');
-        logoutBtn.classList.remove('hidden');
-        sessionStatus.innerText = `USER: ${savedUser.toUpperCase()}`;
-        sessionStatus.style.color = '#10b981';
+        showWorkspace(savedUser);
     }
 
     // 1. Login Logic via Server API
     loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
+        e.preventDefault(); // منع إعادة تحميل الصفحة
+        e.stopPropagation();
+
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value.trim();
 
@@ -51,19 +72,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (response.ok && data.success) {
-                // 💡 حفظ حالة الدخول واسم المستخدم في المتصفح لمنع الخروج على Vercel
+                // حفظ الجلسة في المتصفح
                 localStorage.setItem('isLoggedIn', 'true');
                 localStorage.setItem('username', data.user.name);
 
                 loginCard.classList.add('exit-anim');
 
                 setTimeout(() => {
-                    loginView.classList.add('hidden');
-                    workspaceView.classList.remove('hidden');
-                    logoutBtn.classList.remove('hidden');
-                    sessionStatus.innerText = `USER: ${data.user.name.toUpperCase()}`;
-                    sessionStatus.style.color = '#10b981';
-                }, 400);
+                    showWorkspace(data.user.name);
+                }, 300);
             } else {
                 loginCard.classList.add('shake');
                 alert(`❌ ${data.message || 'بيانات الدخول غير صحيحة!'}`);
@@ -78,19 +95,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // 2. Logout Logic
-    logoutBtn.addEventListener('click', () => {
-        // 💡 مسح الجلسة المخزنة عند تسجيل الخروج
+    logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('username');
-
-        workspaceView.classList.add('hidden');
-        loginView.classList.remove('hidden');
-        loginCard.classList.remove('exit-anim');
-        logoutBtn.classList.add('hidden');
-        sessionStatus.innerText = 'AUTH REQUIRED';
-        sessionStatus.style.color = '#64748b';
-        loginBtn.innerText = 'Authenticate Session ➔';
-        document.getElementById('password').value = '';
+        showLogin();
     });
 
     // 3. Generate Content Logic
@@ -115,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
             generateBtn.innerText = '⚡ Compile Content Payload';
             generateBtn.disabled = false;
             saveBtn.disabled = false;
-            if (encStatus) encStatus.classList.remove('hidden');
+            if (encStatus) encStatus.style.display = 'block';
         }, 400);
     });
 
