@@ -52,47 +52,51 @@ document.addEventListener('DOMContentLoaded', () => {
         showWorkspace(savedUser);
     }
 
-    // 1. Login Logic via Server API
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault(); // منع إعادة تحميل الصفحة
-        e.stopPropagation();
+  // 1. Login Logic via Button Click
+loginBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
 
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value.trim();
+    if (!username || !password) {
+        alert('⚠️ برجاء كتابة اسم المستخدم وكلمة السر');
+        return;
+    }
 
-        loginBtn.innerText = 'Verifying Credentials...';
+    loginBtn.innerText = 'Verifying Credentials...';
 
-        try {
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
 
-            const data = await response.json();
+        const data = await response.json();
 
-            if (response.ok && data.success) {
-                // حفظ الجلسة في المتصفح
-                localStorage.setItem('isLoggedIn', 'true');
-                localStorage.setItem('username', data.user.name);
+        if (response.ok && data.success) {
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('username', data.user.name);
 
-                loginCard.classList.add('exit-anim');
+            loginCard.classList.add('exit-anim');
 
-                setTimeout(() => {
-                    showWorkspace(data.user.name);
-                }, 300);
-            } else {
-                loginCard.classList.add('shake');
-                alert(`❌ ${data.message || 'بيانات الدخول غير صحيحة!'}`);
-                loginBtn.innerText = 'Authenticate Session ➔';
-                setTimeout(() => loginCard.classList.remove('shake'), 400);
-            }
-        } catch (err) {
-            console.error(err);
-            alert('❌ فشل الاتصال بالسيرفر!');
+            setTimeout(() => {
+                showWorkspace(data.user.name);
+            }, 300);
+        } else {
+            loginCard.classList.add('shake');
+            alert(`❌ ${data.message || 'بيانات الدخول غير صحيحة!'}`);
             loginBtn.innerText = 'Authenticate Session ➔';
+            setTimeout(() => loginCard.classList.remove('shake'), 400);
         }
-    });
+    } catch (err) {
+        console.error(err);
+        alert('❌ فشل الاتصال بالسيرفر!');
+        loginBtn.innerText = 'Authenticate Session ➔';
+    }
+});
 
     // 2. Logout Logic
     logoutBtn.addEventListener('click', (e) => {
