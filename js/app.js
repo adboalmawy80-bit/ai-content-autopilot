@@ -20,6 +20,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentCompiledPayload = null;
 
+    // 💡 0. فحص الجلسة أوتوماتيكياً عند فتح/تحديث الصفحة
+    const savedAuth = localStorage.getItem('isLoggedIn');
+    const savedUser = localStorage.getItem('username');
+
+    if (savedAuth === 'true' && savedUser) {
+        loginView.classList.add('hidden');
+        workspaceView.classList.remove('hidden');
+        logoutBtn.classList.remove('hidden');
+        sessionStatus.innerText = `USER: ${savedUser.toUpperCase()}`;
+        sessionStatus.style.color = '#10b981';
+    }
+
     // 1. Login Logic via Server API
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -39,6 +51,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (response.ok && data.success) {
+                // 💡 حفظ حالة الدخول واسم المستخدم في المتصفح لمنع الخروج على Vercel
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('username', data.user.name);
+
                 loginCard.classList.add('exit-anim');
 
                 setTimeout(() => {
@@ -63,6 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Logout Logic
     logoutBtn.addEventListener('click', () => {
+        // 💡 مسح الجلسة المخزنة عند تسجيل الخروج
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('username');
+
         workspaceView.classList.add('hidden');
         loginView.classList.remove('hidden');
         loginCard.classList.remove('exit-anim');
